@@ -1,16 +1,31 @@
-## Hi there 👋
-
-<!--
-**SaAe1101/SaAe1101** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-
-Here are some ideas to get you started:
-
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+장준호 · 백엔드 개발자 지망
+제가 쓸 서비스를 먼저 배포해서 사용자를 받고, 거기서 나온 문제를 근거로 다음 기술을 고릅니다.
+지금은 밴드 합주 매칭 서비스 한 개를 직접 만들어 운영하고 있습니다.
+📫 wnsgh409@gmail.com
+---
+🎸 운영 중인 서비스
+합주각 · hapjugak.com · 저장소
+밴드 합주 멤버를 파트별로 모으는 서비스입니다. 곡마다 보컬·기타·베이스 같은 파트 자리를 만들어 두고, 자리가 다 차면 합주가 성립합니다.
+단톡방에서 곡을 추천받으면 사람들이 각자 1픽에만 손을 들어서 스무 곡에 한두 명씩 흩어지고 한 곡도 성사되지 않는 일이 반복됐습니다. 지금 어느 곡에 누가 들어가 있는지 볼 방법이 없는 게 원인이라고 보고, 단톡방에 메시지로 흩어져 있던 것들을 전부 상태로 들고 있게 만들었습니다.
+Firebase로 먼저 배포해서 2개월 반 운영했습니다. 동시성과 검증, 조회에서 막힌 뒤에 Spring Boot 백엔드를 직접 만들어 재배포했고, 운영 데이터(회원 26, 곡 80, 파트 자리 398, 활동 로그 270)를 무중단으로 옮겼습니다.
+---
+🔧 운영하면서 푼 문제들
+문제	해결
+같은 파트 자리에 두 명이 동시에 들어감	`@Version` 낙관적 락. 실제 MySQL에 스레드 10개를 동시 출발시켜 성공 1건을 CI에서 매번 확인합니다
+곡 목록 조회에 쿼리 71개 (N+1)	QueryDSL `fetchJoin`으로 1개. 하이버네이트 `Statistics`로 쿼리 수를 세는 회귀 테스트를 붙였습니다
+5초 폴링으로 하루 17,000건 요청	SSE로 교체. 실제 변경이 있을 때만 보냅니다. 반영 지연도 5초에서 1초 이내로 줄었습니다
+배포할 때마다 20초씩 사이트가 끊김	블루-그린 + 헬스체크 대기. 끊김 0초이고, 새 컨테이너가 안 뜨면 옛 것이 계속 서비스합니다
+이미지가 DB `LONGTEXT`에 base64로 저장됨	S3 presigned 업로드. 백업 덤프 247KB → 21KB
+CI가 서버에 SSH로 못 들어감	포트를 여는 대신 443으로 배포 신호만 받는 구조로 바꿨습니다. 새로 연 포트 0개
+소셜 로그인 추가 후 기존 회원 전원 로그인 실패	`provider_id`에 Firebase UID가 들어 있던 문제. 코드가 아니라 데이터를 확인하지 않은 것이 원인이었습니다
+과정과 근거는 프로젝트 README에 정리해 뒀습니다.
+---
+🛠 기술
+깊게 다룬 것 — Java 17 · Spring Boot 4.1 · Spring Data JPA (Hibernate 7) · MySQL 8.0 · QueryDSL · Spring Security + JWT · JUnit 5
+직접 구성해 운영 중 — Docker Compose · Nginx · AWS EC2 / S3 / SES · GitHub Actions · Flyway · SSE · Let's Encrypt
+써본 것 — Firebase (Auth, Firestore) · Netlify
+---
+📌 일하는 방식
+기술을 고를 때 안 썼으면 어땠을지를 같이 따져봅니다. 낙관적 락을 쓴 것은 경합이 자리 단위로 쪼개져 충돌이 드물기 때문이고, 단일 재고를 다투는 서비스였다면 재시도가 폭증해서 나쁜 선택이 됐을 겁니다.
+테스트는 실제 MySQL 위에서 돌립니다. 락 동작이 DB마다 달라서 인메모리 DB로 통과한 동시성 테스트는 증명하는 게 없습니다. 현재 109개가 돌고 있고, 마이그레이션과 엔티티가 어긋나면 배포 전에 CI에서 먼저 터집니다.
+고치지 못한 것은 고쳤다고 적지 않습니다. 프로젝트 README 맨 아래에 지금 코드의 결함과 검증하지 못한 구간을 우선순위대로 적어 뒀습니다.
